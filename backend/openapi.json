@@ -1,0 +1,2080 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AssetCore Pro API",
+    "version": "1.0.0",
+    "description": "REST API for AssetCore Pro \u2014 Asset Management & Maintenance Scheduler (factory machine register, work orders, breakdown tickets). Endpoints marked with a lock need a JWT token: log in, then send the token as \"Authorization: Bearer <token>\"."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local backend (Express)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Registration, login, technician list"
+    },
+    {
+      "name": "Users",
+      "description": "User account management (Admin)"
+    },
+    {
+      "name": "Machines",
+      "description": "Machine register (devices table)"
+    },
+    {
+      "name": "Work Orders",
+      "description": "Maintenance jobs (assets table)"
+    },
+    {
+      "name": "Tickets",
+      "description": "Breakdown reports from operators"
+    },
+    {
+      "name": "Categories",
+      "description": "Machine categories"
+    },
+    {
+      "name": "Audit",
+      "description": "Audit log of user actions"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Admin",
+              "Technician",
+              "User"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentCategory": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "machineCode": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "installDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Running",
+              "Under Maintenance",
+              "Breakdown"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "WorkOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "assignedTechnician": {
+            "type": "string"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "scheduledTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Assigned",
+              "ASSIGNED",
+              "In Progress",
+              "Completed"
+            ]
+          },
+          "serviceReportPdf": {
+            "type": "string",
+            "nullable": true,
+            "description": "Base64-encoded PDF, when uploaded"
+          },
+          "serviceCost": {
+            "type": "number"
+          },
+          "registeredDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "maintenanceType": {
+            "type": "string",
+            "enum": [
+              "Preventive",
+              "Breakdown",
+              "Inspection"
+            ]
+          },
+          "downtimeStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "downtimeEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "spareParts": {
+            "type": "string"
+          }
+        }
+      },
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "category": {
+            "type": "string"
+          },
+          "assetName": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "reportedBy": {
+            "type": "string"
+          },
+          "reportedByEmail": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "assignedTechnician": {
+            "type": "string"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "scheduledTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "priority": {
+            "type": "string"
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "action": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user account",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "201": {
+            "description": "User registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "name, email and password are required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A user with this email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "Admin",
+                      "Technician",
+                      "User"
+                    ]
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Log in and receive a JWT token",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "Admin",
+                            "Technician",
+                            "User"
+                          ]
+                        },
+                        "category": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials / missing fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email, username or name (identifier)"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/technicians": {
+      "get": {
+        "summary": "List all technician accounts",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Technician list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "username": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "Admin",
+                          "Technician",
+                          "User"
+                        ]
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "List all user accounts (passwords are never returned)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "username": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "Admin",
+                          "Technician",
+                          "User"
+                        ]
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a user account (Admin)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "Admin",
+                      "Technician",
+                      "User"
+                    ]
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "put": {
+        "summary": "Update a user account (a new password is re-hashed)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "Admin",
+                      "Technician",
+                      "User"
+                    ]
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete a user account \u2014 admin accounts and your own account are protected",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Protected: admin account or own account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/devices": {
+      "get": {
+        "summary": "List all registered machines",
+        "tags": [
+          "Machines"
+        ],
+        "responses": {
+          "200": {
+            "description": "Machine list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "parentCategory": {
+                        "type": "string"
+                      },
+                      "serialNumber": {
+                        "type": "string"
+                      },
+                      "machineCode": {
+                        "type": "string"
+                      },
+                      "department": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "string"
+                      },
+                      "installDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "Running",
+                          "Under Maintenance",
+                          "Breakdown"
+                        ]
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new machine",
+        "tags": [
+          "Machines"
+        ],
+        "responses": {
+          "201": {
+            "description": "Machine registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "name and parentCategory are required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "parentCategory"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "parentCategory": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "machineCode": {
+                    "type": "string"
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "installDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "Running",
+                      "Under Maintenance",
+                      "Breakdown"
+                    ]
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/devices/{id}": {
+      "put": {
+        "summary": "Update a machine",
+        "tags": [
+          "Machines"
+        ],
+        "responses": {
+          "200": {
+            "description": "Machine updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "parentCategory": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "machineCode": {
+                    "type": "string"
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "installDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "Running",
+                      "Under Maintenance",
+                      "Breakdown"
+                    ]
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete a machine",
+        "tags": [
+          "Machines"
+        ],
+        "responses": {
+          "200": {
+            "description": "Machine deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/assets": {
+      "get": {
+        "summary": "List all work orders",
+        "tags": [
+          "Work Orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Work order list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "serialNumber": {
+                        "type": "string"
+                      },
+                      "issue": {
+                        "type": "string"
+                      },
+                      "assignedTechnician": {
+                        "type": "string"
+                      },
+                      "scheduledDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                      },
+                      "scheduledTime": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "Pending",
+                          "Assigned",
+                          "ASSIGNED",
+                          "In Progress",
+                          "Completed"
+                        ]
+                      },
+                      "serviceReportPdf": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Base64-encoded PDF, when uploaded"
+                      },
+                      "serviceCost": {
+                        "type": "number"
+                      },
+                      "registeredDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                      },
+                      "maintenanceType": {
+                        "type": "string",
+                        "enum": [
+                          "Preventive",
+                          "Breakdown",
+                          "Inspection"
+                        ]
+                      },
+                      "downtimeStart": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "downtimeEnd": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "spareParts": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a work order \u2014 the machine status is recomputed automatically",
+        "tags": [
+          "Work Orders"
+        ],
+        "responses": {
+          "201": {
+            "description": "Work order added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "issue": {
+                    "type": "string"
+                  },
+                  "assignedTechnician": {
+                    "type": "string"
+                  },
+                  "scheduledDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "scheduledTime": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "Pending",
+                      "Assigned",
+                      "ASSIGNED",
+                      "In Progress",
+                      "Completed"
+                    ]
+                  },
+                  "serviceReportPdf": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Base64-encoded PDF, when uploaded"
+                  },
+                  "serviceCost": {
+                    "type": "number"
+                  },
+                  "registeredDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "maintenanceType": {
+                    "type": "string",
+                    "enum": [
+                      "Preventive",
+                      "Breakdown",
+                      "Inspection"
+                    ]
+                  },
+                  "downtimeStart": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "downtimeEnd": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "spareParts": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assets/{id}": {
+      "put": {
+        "summary": "Update a work order (e.g. progress, completion with downtime end and spare parts)",
+        "tags": [
+          "Work Orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Work order updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "issue": {
+                    "type": "string"
+                  },
+                  "assignedTechnician": {
+                    "type": "string"
+                  },
+                  "scheduledDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "scheduledTime": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "Pending",
+                      "Assigned",
+                      "ASSIGNED",
+                      "In Progress",
+                      "Completed"
+                    ]
+                  },
+                  "serviceReportPdf": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Base64-encoded PDF, when uploaded"
+                  },
+                  "serviceCost": {
+                    "type": "number"
+                  },
+                  "registeredDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "maintenanceType": {
+                    "type": "string",
+                    "enum": [
+                      "Preventive",
+                      "Breakdown",
+                      "Inspection"
+                    ]
+                  },
+                  "downtimeStart": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "downtimeEnd": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "spareParts": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete a work order",
+        "tags": [
+          "Work Orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Work order deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/tickets": {
+      "post": {
+        "summary": "Create a breakdown ticket (operator report)",
+        "tags": [
+          "Tickets"
+        ],
+        "responses": {
+          "201": {
+            "description": "Ticket created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "ticketId": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "assetName": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "issue": {
+                    "type": "string"
+                  },
+                  "reportedBy": {
+                    "type": "string"
+                  },
+                  "reportedByEmail": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "assignedTechnician": {
+                    "type": "string"
+                  },
+                  "scheduledDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "scheduledTime": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "priority": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List all tickets",
+        "tags": [
+          "Tickets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "assetName": {
+                        "type": "string"
+                      },
+                      "serialNumber": {
+                        "type": "string"
+                      },
+                      "issue": {
+                        "type": "string"
+                      },
+                      "reportedBy": {
+                        "type": "string"
+                      },
+                      "reportedByEmail": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                      },
+                      "assignedTechnician": {
+                        "type": "string"
+                      },
+                      "scheduledDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                      },
+                      "scheduledTime": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "priority": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tickets/{id}": {
+      "put": {
+        "summary": "Update a ticket (status, assigned technician, schedule)",
+        "tags": [
+          "Tickets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "assetName": {
+                    "type": "string"
+                  },
+                  "serialNumber": {
+                    "type": "string"
+                  },
+                  "issue": {
+                    "type": "string"
+                  },
+                  "reportedBy": {
+                    "type": "string"
+                  },
+                  "reportedByEmail": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "assignedTechnician": {
+                    "type": "string"
+                  },
+                  "scheduledDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "scheduledTime": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "priority": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete a ticket",
+        "tags": [
+          "Tickets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "List all categories",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "Category list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a category",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "201": {
+            "description": "Category added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Category name is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This category already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{id}": {
+      "delete": {
+        "summary": "Delete a category",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "Category deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "summary": "List audit log entries",
+        "tags": [
+          "Audit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                      },
+                      "action": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Record an audit log entry",
+        "tags": [
+          "Audit"
+        ],
+        "responses": {
+          "201": {
+            "description": "Audit log recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

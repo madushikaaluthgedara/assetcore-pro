@@ -1,0 +1,24 @@
+@import "tailwindcss";
+/* Dark Theme (Default) */
+:root {
+  --bg-primary: #090d16;
+  --bg-card: #0f172a;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --border-color: #1e293b;
+}
+
+/* Light Theme */
+[data-theme='light'] {
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  transition: all 0.3s ease;
+}

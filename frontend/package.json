@@ -1,0 +1,54 @@
+{
+  "name": "asset-core-pro",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "electron": "electron .",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dist": "vite build && electron-builder"
+  },
+  "dependencies": {
+    "html5-qrcode": "^2.3.8",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "qrcode": "^1.5.4",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.18.4",
+    "recharts": "^3.10.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.6.1",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.0"
+  },
+  "build": {
+    "appId": "com.assetcore.app",
+    "productName": "AssetCore Pro",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "main.cjs"
+    ],
+    "extraMetadata": {
+      "main": "main.cjs"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
